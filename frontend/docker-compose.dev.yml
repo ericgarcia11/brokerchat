@@ -1,0 +1,15 @@
+services:
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - nextcache:/app/.next
+    command: sh -c "npm install && npm run dev"
+    environment:
+      NODE_ENV: development
+
+volumes:
+  node_modules:
+  nextcache:
