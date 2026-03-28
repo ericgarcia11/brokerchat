@@ -90,6 +90,29 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     applyBranding(config ?? null);
   }, [config]);
 
+  // Update browser favicon when logo changes
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const logoUrl = config?.logo_url ?? null;
+
+    // Find or create the <link rel="icon"> element
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+
+    if (logoUrl) {
+      link.href = logoUrl;
+      // Reset type for data URLs — browsers infer type from data URI prefix
+      link.type = logoUrl.startsWith("data:image/svg") ? "image/svg+xml" : "image/png";
+    } else {
+      link.href = "/favicon.ico";
+      link.type = "image/x-icon";
+    }
+  }, [config?.logo_url]);
+
   // Keep browser tab title in sync — Next.js metadata can overwrite
   // document.title, so we use a MutationObserver on <title> to enforce ours.
   useEffect(() => {
