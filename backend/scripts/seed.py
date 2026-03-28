@@ -21,12 +21,15 @@ from app.domain.models.models import (
     Equipe,
     Filial,
     RegraRoteamento,
+    Usuario,
 )
+from app.core.security import hash_password
 from app.graphs.prompts.agent_prompts import PROMPTS
 
 
 # Deterministic UUIDs for seeds
 EMPRESA_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+USUARIO_ADMIN_ID = uuid.UUID("00000000-0000-0000-0000-000000000099")
 FILIAL_SOROCABA_ID = uuid.UUID("00000000-0000-0000-0000-000000000010")
 FILIAL_BC_ID = uuid.UUID("00000000-0000-0000-0000-000000000011")
 EQUIPE_VENDAS_SOROCABA_ID = uuid.UUID("00000000-0000-0000-0000-000000000020")
@@ -180,6 +183,18 @@ async def seed(session: AsyncSession) -> None:
         ),
     ]
     session.add_all(regras)
+
+    # ── Usuário Admin ──
+    admin = Usuario(
+        id=USUARIO_ADMIN_ID,
+        empresa_id=EMPRESA_ID,
+        nome="Administrador",
+        email="admin@salu.com",
+        login="admin@salu.com",
+        senha_hash=hash_password("admin123"),
+        papel="admin",
+    )
+    session.add(admin)
 
     await session.commit()
     print("Seeds applied successfully!")
