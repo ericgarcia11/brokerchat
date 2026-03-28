@@ -64,3 +64,9 @@ class UazAPIClient:
 
     async def instance_get(self, path: str, token: str | None = None) -> dict[str, Any]:
         return await self._request("GET", path, self._instance_headers(token))
+
+    async def instance_delete(self, path: str, token: str | None = None) -> dict[str, Any]:
+        return await self._request("DELETE", path, self._instance_headers(token))
+
+    async def instance_delete(self, path: str, token: str | None = None) -> dict[str, Any]:
+        return await self._request("DELETE", path, self._instance_headers(token))

@@ -31,6 +31,15 @@ from app.workers.tasks.message import send_outbound_message
 router = APIRouter(prefix="/admin", tags=["admin-ops"])
 
 
+# ── UazAPI Sync ──────────────────────────────────
+@router.post("/connections/sync", response_model=list[ConexaoRead], tags=["connections"])
+async def sync_connections(session: DBSession, auth: AuthPayload):
+    """Pull all instances from UazAPI and upsert into the connections table."""
+    empresa_id = uuid.UUID(auth["empresa_id"])
+    svc = UazapiService(session)
+    return await svc.sync_connections(empresa_id)
+
+
 # ── Chats ────────────────────────────────────────
 @router.get("/chats", response_model=list[ChatRead])
 async def list_chats(
@@ -115,7 +124,7 @@ async def send_message(body: SendMessageRequest, session: DBSession, auth: AuthP
 @router.post("/uazapi/instances", tags=["uazapi"])
 async def create_uazapi_instance(body: CreateInstanceRequest, session: DBSession, auth: AuthPayload):
     svc = UazapiService(session)
-    result = await svc.create_instance(body.name, body.phone, body.webhook_url)
+    result = await svc.create_instance(body.name)
     return result
 
 
@@ -168,3 +177,15 @@ async def get_uazapi_status(connection_id: uuid.UUID, session: DBSession, auth: 
         phone=raw.get("phone"),
         name=raw.get("name"),
     )
+
+
+@router.delete("/connections/{connection_id}", response_model=MessageResponse, tags=["connections"])
+async def delete_connection(connection_id: uuid.UUID, session: DBSession, auth: AuthPayload):
+    """Delete a connection from both UazAPI and the DB."""
+    repo = ConexaoRepository(session)
+    conexao = await repo.get_by_id(connection_id)
+    if not conexao:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    svc = UazapiService(session)
+    await svc.delete_connection(conexao)
+    return MessageResponse(message="Connection deleted")

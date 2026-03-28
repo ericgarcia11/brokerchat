@@ -53,7 +53,7 @@ export function useCreateConnection() {
 export function useDeleteConnection() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => conexaoApi.delete(id),
+    mutationFn: (id: string) => uazapiApi.deleteConnection(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["conexoes"] });
       toast.success("Conexão excluída com sucesso.");
@@ -78,6 +78,19 @@ export function useCreateInstance() {
   return useMutation({
     mutationFn: (data: CreateInstanceRequest) => uazapiApi.createInstance(data),
     onSuccess: () => toast.success("Instância criada com sucesso."),
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+}
+
+export function useSyncConnections() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => uazapiApi.syncConnections(),
+    onSuccess: (data) => {
+      qc.setQueryData(["conexoes", 0, 50], data);
+      qc.invalidateQueries({ queryKey: ["conexoes"] });
+      toast.success(`${data.length} conexão(ões) sincronizada(s) com sucesso.`);
+    },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 }

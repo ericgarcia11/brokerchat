@@ -160,6 +160,11 @@ class Conexao(Base):
     webhook_secret_ref: Mapped[str] = mapped_column(String(255), nullable=False, default=lambda: uuid.uuid4().hex)
     configuracao: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # UazAPI live-status fields (populated via sync)
+    uazapi_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    profile_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    profile_pic_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     regras: Mapped[list["RegraRoteamento"]] = relationship(back_populates="conexao", lazy="selectin", order_by="RegraRoteamento.prioridade")
@@ -426,3 +431,23 @@ class CadenceExecucao(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     fluxo: Mapped["CadenceFluxo"] = relationship(back_populates="execucoes", lazy="selectin")
+
+
+# ──────────────────────────────────────────────────────────
+# Configuração da Empresa (branding SaaS)
+# ──────────────────────────────────────────────────────────
+class ConfiguracaoEmpresa(Base):
+    __tablename__ = "configuracao_empresa"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    empresa_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("empresas.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    nome_app: Mapped[str] = mapped_column(String(255), nullable=False, server_default="Meu App")
+    nome_empresa: Mapped[str] = mapped_column(String(255), nullable=False, server_default="Minha Empresa")
+    logo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    paleta_cores: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    uazapi_server_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    uazapi_admin_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

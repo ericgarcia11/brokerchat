@@ -14,6 +14,7 @@ import { Moon, Sun, LogOut, Menu, ChevronDown } from "lucide-react";
 import { clearSession, getUser } from "@/lib/auth/session";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppStore } from "@/stores/app-store";
+import { useBranding } from "@/providers/branding-provider";
 import { cn } from "@/lib/utils";
 
 const pageTitles: Record<string, string> = {
@@ -32,12 +33,12 @@ const pageTitles: Record<string, string> = {
   "/settings": "Configurações",
 };
 
-function getPageTitle(pathname: string): string {
+function getPageTitle(pathname: string): string | null {
   if (pathname in pageTitles) return pageTitles[pathname];
   for (const [key, value] of Object.entries(pageTitles)) {
     if (key !== "/" && pathname.startsWith(key)) return value;
   }
-  return "Salu Conecta";
+  return null;
 }
 
 export function Header() {
@@ -45,6 +46,7 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
+  const { config } = useBranding();
   const user = getUser();
   const userName = (user?.nome as string) || "Usuário";
   const initials = userName
@@ -54,7 +56,7 @@ export function Header() {
     .join("")
     .toUpperCase();
 
-  const pageTitle = getPageTitle(pathname);
+  const pageTitle = getPageTitle(pathname) || config?.nome_app || "Salu Conecta";
 
   function handleLogout() {
     clearSession();

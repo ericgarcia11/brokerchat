@@ -13,22 +13,32 @@ class UazAPIAdapter:
         self.client = client or UazAPIClient()
 
     # ── Instance Management ──────────────────────
-    async def create_instance(self, name: str, phone: str, webhook_url: str) -> dict[str, Any]:
-        body = {
-            "name": name,
-            "phone": phone,
-            "webhook": webhook_url,
-        }
-        return await self.client.admin_post("/instance/init", body)
+    async def create_instance(self, name: str) -> dict[str, Any]:
+        """POST /instance/init — create instance. Returns response with root-level token."""
+        return await self.client.admin_post("/instance/init", {"name": name})
+
+    async def connect_instance(self, token: str) -> dict[str, Any]:
+        """POST /instance/connect — trigger QR/pairing code generation."""
+        return await self.client.instance_post("/instance/connect", token=token)
+
+    async def list_all_instances(self) -> list[dict[str, Any]]:
+        result = await self.client.admin_get("/instance/all")
+        if isinstance(result, list):
+            return result
+        # Some UazAPI versions wrap in {"instances": [...]}
+        if isinstance(result, dict):
+            for key in ("instances", "data", "result"):
+                if isinstance(result.get(key), list):
+                    return result[key]
+        return []
 
     async def get_instance_status(self, token: str) -> dict[str, Any]:
+        """GET /instance/status — check connection state."""
         return await self.client.instance_get("/instance/status", token=token)
 
-    async def get_qr_code(self, token: str) -> dict[str, Any]:
-        return await self.client.instance_get("/instance/qrcode", token=token)
-
-    async def disconnect_instance(self, token: str) -> dict[str, Any]:
-        return await self.client.instance_post("/instance/disconnect", token=token)
+    async def delete_instance(self, token: str) -> dict[str, Any]:
+        """DELETE /instance — permanently delete instance from UazAPI."""
+        return await self.client.instance_delete("/instance", token=token)
 
     # ── Sending Messages ─────────────────────────
     async def send_text(

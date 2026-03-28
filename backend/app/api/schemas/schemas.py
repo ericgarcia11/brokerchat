@@ -193,6 +193,10 @@ class ConexaoRead(BaseModel):
     webhook_secret_ref: str
     configuracao: dict | None
     ativo: bool
+    uazapi_status: str | None
+    profile_name: str | None
+    profile_pic_url: str | None
+    synced_at: datetime | None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -386,14 +390,12 @@ class ImovelRead(BaseModel):
 # ── UazAPI Admin ─────────────────────────────────
 class CreateInstanceRequest(BaseModel):
     name: str
-    phone: str
-    webhook_url: str
 
 
 class ProvisionConnectionRequest(BaseModel):
     empresa_id: uuid.UUID
     nome: str = Field(..., max_length=255)
-    telefone_e164: str = Field(..., max_length=20)
+    telefone_e164: str = Field("", max_length=20)
     filial_id: uuid.UUID | None = None
     equipe_padrao_id: uuid.UUID | None = None
 
@@ -495,5 +497,48 @@ class CadenceExecucaoRead(BaseModel):
     iniciada_em: datetime
     encerrada_em: datetime | None
     created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ── Paleta de Cores ──────────────────────────────
+class PaletaCoresTheme(BaseModel):
+    primary: str | None = None
+    primary_foreground: str | None = Field(None, alias="primary-foreground")
+    sidebar_bg: str | None = Field(None, alias="sidebar-bg")
+    sidebar_fg: str | None = Field(None, alias="sidebar-fg")
+    header_bg: str | None = Field(None, alias="header-bg")
+    header_fg: str | None = Field(None, alias="header-fg")
+    accent: str | None = None
+    accent_foreground: str | None = Field(None, alias="accent-foreground")
+
+    model_config = {"populate_by_name": True}
+
+
+class PaletaCores(BaseModel):
+    light: PaletaCoresTheme | None = None
+    dark: PaletaCoresTheme | None = None
+
+
+# ── Configuração da Empresa (branding SaaS) ─────
+class ConfiguracaoEmpresaUpdate(BaseModel):
+    nome_app: str | None = Field(None, max_length=255)
+    nome_empresa: str | None = Field(None, max_length=255)
+    paleta_cores: PaletaCores | None = None
+    uazapi_server_url: str | None = None
+    uazapi_admin_token: str | None = None
+
+
+class ConfiguracaoEmpresaRead(BaseModel):
+    id: uuid.UUID
+    empresa_id: uuid.UUID
+    nome_app: str
+    nome_empresa: str
+    logo_url: str | None
+    paleta_cores: dict | None
+    uazapi_server_url: str | None
+    uazapi_admin_token: str | None
+    created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}

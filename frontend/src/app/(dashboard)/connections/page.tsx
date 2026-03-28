@@ -7,6 +7,7 @@ import {
   useConnectionStatus,
   useConnectionQRCode,
   useProvisionConnection,
+  useSyncConnections,
 } from "@/features/connections/use-connections";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable } from "@/components/shared/data-table";
@@ -39,6 +40,8 @@ import {
   QrCode,
   Copy,
   Check,
+  CloudDownload,
+  User,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -49,10 +52,6 @@ type WizardStep = "form" | "pairing" | "connected";
 
 const provisionSchema = z.object({
   nome: z.string().min(1, "Nome obrigatório"),
-  telefone_e164: z
-    .string()
-    .min(10, "Telefone obrigatório")
-    .regex(/^\+?\d+$/, "Formato inválido — use apenas números com +"),
 });
 type ProvisionForm = z.infer<typeof provisionSchema>;
 
@@ -73,7 +72,8 @@ function PairingPanel({
 
   const qrcode = qrData?.qrcode ?? initialQR;
   const pairingCode = qrData?.pairing_code ?? initialPairingCode;
-  const status = qrData?.status ?? "disconnected";
+  const rawStatus = qrData?.status ?? "disconnected";
+  const status = rawStatus === "open" ? "connected" : rawStatus;
 
   useEffect(() => {
     if (status === "connected") {
@@ -153,12 +153,13 @@ export default function ConnectionsPage() {
   const { data: connections, isLoading } = useConnections();
   const deleteConn = useDeleteConnection();
   const provision = useProvisionConnection();
+  const syncConn = useSyncConnections();
   const { data: connStatus, isLoading: statusLoading } =
     useConnectionStatus(statusCheckId);
 
   const form = useForm<ProvisionForm>({
     resolver: zodResolver(provisionSchema),
-    defaultValues: { nome: "", telefone_e164: "" },
+    defaultValues: { nome: "" },
   });
 
   function openWizard() {
@@ -179,7 +180,6 @@ export default function ConnectionsPage() {
       {
         empresa_id: env.empresaId,
         nome: values.nome,
-        telefone_e164: values.telefone_e164,
       },
       {
         onSuccess: (data) => {
@@ -202,9 +202,30 @@ export default function ConnectionsPage() {
 
   const columns = [
     {
-      header: "Nome",
+      header: "Conta",
       accessorKey: "nome" as const,
-      cell: (row: Conexao) => <span className="font-medium">{row.nome}</span>,
+      cell: (row: Conexao) => (
+        <div className="flex items-center gap-3">
+          {row.profile_pic_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={row.profile_pic_url}
+              alt={row.profile_name || row.nome}
+              className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+              <User className="h-4 w-4 text-muted-foreground" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="font-medium truncate">{row.profile_name || row.nome}</p>
+            {row.profile_name && row.profile_name !== row.nome && (
+              <p className="text-xs text-muted-foreground truncate">{row.nome}</p>
+            )}
+          </div>
+        </div>
+      ),
     },
     {
       header: "Telefone",
@@ -212,28 +233,38 @@ export default function ConnectionsPage() {
       cell: (row: Conexao) => formatPhone(row.telefone_e164),
     },
     {
-      header: "Canal",
-      accessorKey: "canal" as const,
-      cell: (row: Conexao) => <Badge variant="outline">{row.canal}</Badge>,
-    },
-    {
       header: "Status",
-      accessorKey: "ativo" as const,
-      cell: (row: Conexao) =>
-        row.ativo ? (
-          <Badge className="bg-green-600">
-            <Wifi className="mr-1 h-3 w-3" /> Conectado
+      accessorKey: "uazapi_status" as const,
+      cell: (row: Conexao) => {
+        const status = row.uazapi_status || (row.ativo ? "connected" : "disconnected");
+        if (status === "connected")
+          return (
+            <Badge className="bg-green-600 gap-1">
+              <Wifi className="h-3 w-3" /> Conectado
+            </Badge>
+          );
+        if (status === "connecting")
+          return (
+            <Badge variant="secondary" className="gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" /> Conectando
+            </Badge>
+          );
+        return (
+          <Badge variant="destructive" className="gap-1">
+            <WifiOff className="h-3 w-3" /> Desconectado
           </Badge>
-        ) : (
-          <Badge variant="destructive">
-            <WifiOff className="mr-1 h-3 w-3" /> Desconectado
-          </Badge>
-        ),
+        );
+      },
     },
     {
-      header: "Criada em",
-      accessorKey: "created_at" as const,
-      cell: (row: Conexao) => formatDate(row.created_at),
+      header: "Sincronizado",
+      accessorKey: "synced_at" as const,
+      cell: (row: Conexao) =>
+        row.synced_at ? (
+          <span className="text-sm text-muted-foreground">{formatDate(row.synced_at)}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground">Nunca</span>
+        ),
     },
     {
       header: "",
@@ -266,15 +297,34 @@ export default function ConnectionsPage() {
         title="Conexões WhatsApp"
         description="Gerencie as conexões de WhatsApp da sua empresa"
         action={
-          <Button onClick={openWizard}>
-            <Smartphone className="mr-2 h-4 w-4" /> Conectar WhatsApp
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => syncConn.mutate()}
+              disabled={syncConn.isPending}
+            >
+              {syncConn.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <CloudDownload className="mr-2 h-4 w-4" />
+              )}
+              Sincronizar
+            </Button>
+            <Button onClick={openWizard}>
+              <Smartphone className="mr-2 h-4 w-4" /> Conectar WhatsApp
+            </Button>
+          </div>
         }
       />
 
       <DataTable
         columns={columns}
-        data={connections || []}
+        data={(connections || []).slice().sort((a, b) => {
+          const aConn = a.uazapi_status === "open" ? 0 : 1;
+          const bConn = b.uazapi_status === "open" ? 0 : 1;
+          if (aConn !== bConn) return aConn - bConn;
+          return (a.profile_name || a.nome).localeCompare(b.profile_name || b.nome, "pt-BR");
+        })}
         isLoading={isLoading}
       />
 
@@ -340,8 +390,8 @@ export default function ConnectionsPage() {
                   Conectar WhatsApp
                 </DialogTitle>
                 <DialogDescription>
-                  Informe o nome e o número do WhatsApp que deseja conectar. Em
-                  seguida você poderá escanear o QR code com o celular.
+                  Informe o nome da conexão. Em seguida você poderá escanear o
+                  QR code com o celular.
                 </DialogDescription>
               </DialogHeader>
               <form
@@ -357,18 +407,6 @@ export default function ConnectionsPage() {
                   {form.formState.errors.nome && (
                     <p className="text-xs text-destructive">
                       {form.formState.errors.nome.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefone (E.164) *</Label>
-                  <Input
-                    placeholder="+5511999999999"
-                    {...form.register("telefone_e164")}
-                  />
-                  {form.formState.errors.telefone_e164 && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.telefone_e164.message}
                     </p>
                   )}
                 </div>
@@ -436,11 +474,8 @@ export default function ConnectionsPage() {
                   WhatsApp Conectado!
                 </DialogTitle>
                 <DialogDescription>
-                  O número{" "}
-                  <strong>
-                    {formatPhone(provisionResult.connection.telefone_e164)}
-                  </strong>{" "}
-                  foi conectado com sucesso.
+                  <strong>{provisionResult.connection.nome}</strong> foi
+                  conectado com sucesso.
                 </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col items-center gap-4 py-6">
@@ -452,7 +487,7 @@ export default function ConnectionsPage() {
                     {provisionResult.connection.nome}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {formatPhone(provisionResult.connection.telefone_e164)}
+                    WhatsApp conectado com sucesso!
                   </p>
                 </div>
               </div>

@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Building2, Lock, Mail, Eye, EyeOff } from "lucide-react";
-import Image from "next/image";
 import { setSession } from "@/lib/auth/session";
 import { apiClient } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
+import { usePublicBranding } from "@/features/settings/use-public-branding";
 
 interface LoginResponse {
   access_token: string;
@@ -19,6 +19,10 @@ interface LoginResponse {
 
 export default function LoginPage() {
   const router = useRouter();
+  const branding = usePublicBranding();
+  const appName = branding?.nome_app || "BrokerChat";
+  const companyName = branding?.nome_empresa || appName;
+  const logoUrl = branding?.logo_url || null;
   const [login, setLogin] = useState("");
   const [senha, setSenha] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -67,20 +71,23 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col items-center text-center animate-fade-in-up">
           <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20 shadow-xl">
-            <Image
-              src="/logo.png"
-              alt="Salu Imóveis"
-              width={52}
-              height={52}
-              className="rounded-xl"
-              priority
-            />
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={appName}
+                width={52}
+                height={52}
+                className="rounded-xl object-contain"
+              />
+            ) : (
+              <Building2 className="h-10 w-10 text-white/80" />
+            )}
           </div>
           <h1 className="font-display text-3xl font-bold text-white mb-2">
-            Salu Conecta
+            {appName}
           </h1>
           <p className="text-white/60 text-sm mb-10">
-            CRM Imobiliário com WhatsApp & IA
+            {companyName !== appName ? companyName : "CRM com WhatsApp & IA"}
           </p>
 
           <div className="flex flex-col gap-4 w-full max-w-xs">
@@ -100,7 +107,7 @@ export default function LoginPage() {
         </div>
 
         <p className="absolute bottom-6 text-xs text-white/30">
-          © 2025 Salu Imóveis. Todos os direitos reservados.
+          © {new Date().getFullYear()} {companyName}. Todos os direitos reservados.
         </p>
       </div>
 
@@ -110,17 +117,20 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="flex flex-col items-center mb-8 lg:hidden">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-sidebar shadow-lg">
-              <Image
-                src="/logo.png"
-                alt="Salu Imóveis"
-                width={40}
-                height={40}
-                className="rounded-xl"
-                priority
-              />
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={appName}
+                  width={40}
+                  height={40}
+                  className="rounded-xl object-contain"
+                />
+              ) : (
+                <Building2 className="h-8 w-8 text-sidebar-foreground/70" />
+              )}
             </div>
-            <h1 className="font-display text-2xl font-bold">Salu Conecta</h1>
-            <p className="text-sm text-muted-foreground mt-1">CRM Imobiliário</p>
+            <h1 className="font-display text-2xl font-bold">{appName}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{companyName !== appName ? companyName : "CRM"}</p>
           </div>
 
           {/* Form header */}
@@ -201,7 +211,7 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
-            Salu Conecta — Powered by WhatsApp & IA
+            {appName} — Powered by WhatsApp & IA
           </p>
         </div>
       </div>

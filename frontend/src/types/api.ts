@@ -169,8 +169,10 @@ export interface Conexao {
   identificador_externo: string | null;
   webhook_secret_ref: string;
   configuracao: Record<string, unknown> | null;
-  ativo: boolean;
-  created_at: string;
+  ativo: boolean;  uazapi_status: string | null;
+  profile_name: string | null;
+  profile_pic_url: string | null;
+  synced_at: string | null;  created_at: string;
 }
 
 export interface ConexaoCreate {
@@ -388,14 +390,12 @@ export interface InteresseImovel {
 // ── UazAPI ──────────────────────────────────────
 export interface CreateInstanceRequest {
   name: string;
-  phone: string;
-  webhook_url: string;
 }
 
 export interface ProvisionConnectionRequest {
   empresa_id: string;
   nome: string;
-  telefone_e164: string;
+  telefone_e164?: string;
   filial_id?: string | null;
   equipe_padrao_id?: string | null;
 }
@@ -500,4 +500,42 @@ export interface CadenceExecucaoCreate {
   contato_id: string;
   conexao_id: string;
   oportunidade_id?: string | null;
+}
+
+// ── Configuração Empresa (branding SaaS) ────────
+export interface PaletaCoresTheme {
+  primary?: string;
+  "primary-foreground"?: string;
+  "sidebar-bg"?: string;
+  "sidebar-fg"?: string;
+  "header-bg"?: string;
+  "header-fg"?: string;
+  accent?: string;
+  "accent-foreground"?: string;
+}
+
+export interface PaletaCores {
+  light?: PaletaCoresTheme;
+  dark?: PaletaCoresTheme;
+}
+
+export interface ConfiguracaoEmpresa {
+  id: string;
+  empresa_id: string;
+  nome_app: string;
+  nome_empresa: string;
+  logo_url: string | null;
+  paleta_cores: PaletaCores | null;
+  uazapi_server_url: string | null;
+  uazapi_admin_token: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConfiguracaoEmpresaUpdate {
+  nome_app?: string;
+  nome_empresa?: string;
+  paleta_cores?: PaletaCores | null;
+  uazapi_server_url?: string | null;
+  uazapi_admin_token?: string | null;
 }

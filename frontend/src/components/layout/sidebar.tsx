@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -27,6 +26,7 @@ import {
   Repeat2,
 } from "lucide-react";
 import { useAppStore } from "@/stores/app-store";
+import { useBranding } from "@/providers/branding-provider";
 
 const navGroups = [
   {
@@ -141,6 +141,11 @@ export function Sidebar() {
   const sidebarOpen = useAppStore((s) => s.sidebarOpen);
   const setSidebarOpen = useAppStore((s) => s.setSidebarOpen);
   const [collapsed, setCollapsed] = useState(false);
+  const { config } = useBranding();
+
+  const logoUrl = config?.logo_url || "/logo.png";
+  const appName = config?.nome_app || "Salu Conecta";
+  const companyName = config?.nome_empresa || "Imóveis & IA";
 
   return (
     <>
@@ -156,12 +161,13 @@ export function Sidebar() {
         <div className="relative flex h-14 items-center border-b border-white/10 shrink-0 px-3">
           {/* Logo icon — always visible */}
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/20 ring-1 ring-primary/30">
-            <Image
-              src="/logo.png"
-              alt="Salu Imóveis"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoUrl}
+              alt={appName}
               width={20}
               height={20}
-              className="rounded"
+              className="rounded object-contain"
             />
           </div>
 
@@ -173,10 +179,10 @@ export function Sidebar() {
             )}
           >
             <span className="font-display font-semibold text-sm text-white whitespace-nowrap">
-              Salu Conecta
+              {appName}
             </span>
             <span className="text-[10px] text-white/50 uppercase tracking-wider whitespace-nowrap">
-              Imóveis & IA
+              {companyName}
             </span>
           </div>
 
@@ -208,7 +214,7 @@ export function Sidebar() {
           <div className="border-t border-white/10 p-3 shrink-0">
             <div className="rounded-lg bg-white/5 px-3 py-2">
               <p className="text-[10px] text-white/40 text-center whitespace-nowrap">
-                © 2025 Salu Imóveis
+                &copy; {new Date().getFullYear()} {companyName}
               </p>
             </div>
           </div>
@@ -243,20 +249,21 @@ export function Sidebar() {
           {/* Logo */}
           <div className="flex h-14 items-center gap-3 border-b border-white/10 px-4 shrink-0">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 ring-1 ring-primary/30">
-              <Image
-                src="/logo.png"
-                alt="Salu Imóveis"
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                alt={appName}
                 width={20}
                 height={20}
-                className="rounded"
+                className="rounded object-contain"
               />
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-display font-semibold text-sm text-white">
-                Salu Conecta
+                {appName}
               </span>
               <span className="text-[10px] text-white/50 uppercase tracking-wider">
-                Imóveis & IA
+                {companyName}
               </span>
             </div>
           </div>
@@ -270,7 +277,7 @@ export function Sidebar() {
           <div className="border-t border-white/10 p-3 shrink-0">
             <div className="rounded-lg bg-white/5 px-3 py-2">
               <p className="text-[10px] text-white/40 text-center">
-                © 2025 Salu Imóveis
+                &copy; {new Date().getFullYear()} {companyName}
               </p>
             </div>
           </div>

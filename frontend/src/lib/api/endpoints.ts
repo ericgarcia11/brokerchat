@@ -22,6 +22,7 @@ import type {
   LoginRequest, LoginResponse,
   CadenceFluxo, CadenceFluxoCreate,
   CadenceExecucao,
+  ConfiguracaoEmpresa, ConfiguracaoEmpresaUpdate,
 } from "@/types/api";
 
 // ── Health ──────────────────────────────────────
@@ -119,4 +120,35 @@ export const uazapiApi = {
     apiClient.post<ProvisionConnectionResponse>("/admin/connections/provision", body),
   qrcode: (connectionId: string) =>
     apiClient.get<QRCodeResponse>(`/admin/connections/${connectionId}/qrcode`),
+  syncConnections: () =>
+    apiClient.post<Conexao[]>("/admin/connections/sync"),
+  deleteConnection: (connectionId: string) =>
+    apiClient.delete<MessageResponse>(`/admin/connections/${connectionId}`),
+};
+
+// ── Configuração Empresa (branding) ─────────────
+export const configuracaoApi = {
+  get: () =>
+    apiClient.get<ConfiguracaoEmpresa>("/admin/configuracao"),
+  update: (data: ConfiguracaoEmpresaUpdate) =>
+    apiClient.put<ConfiguracaoEmpresa>("/admin/configuracao", data),
+  uploadLogo: async (file: File): Promise<ConfiguracaoEmpresa> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("wwp_token") : null;
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${(await import("@/lib/env")).env.apiBaseUrl}/admin/configuracao/logo`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.detail || `Erro ${res.status}`);
+    }
+    return res.json();
+  },
+  deleteLogo: () =>
+    apiClient.delete<ConfiguracaoEmpresa>("/admin/configuracao/logo"),
+  getPublico: (empresaId: string) =>
+    apiClient.get<ConfiguracaoEmpresa>("/public/configuracao", { empresa_id: empresaId }),
 };
