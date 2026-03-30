@@ -98,6 +98,26 @@ class UazAPIAdapter:
         body = {"phone": phone}
         return await self.client.instance_post("/chat/mark-read", body, token=token)
 
+    async def find_chats(
+        self,
+        token: str,
+        limit: int = 50,
+        offset: int = 0,
+        operator: str = "AND",
+        sort: str = "-wa_lastMsgTimestamp",
+        filters: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """POST /chat/find — return paginated list of chats from UazAPI instance."""
+        body: dict[str, Any] = {
+            "operator": operator,
+            "sort": sort,
+            "limit": limit,
+            "offset": offset,
+        }
+        if filters:
+            body.update(filters)
+        return await self.client.instance_post("/chat/find", body, token=token)
+
     async def generic_send(
         self,
         token: str,

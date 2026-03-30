@@ -23,6 +23,7 @@ import type {
   CadenceFluxo, CadenceFluxoCreate,
   CadenceExecucao,
   ConfiguracaoEmpresa, ConfiguracaoEmpresaUpdate,
+  InboxListResponse, InboxChat, InboxSyncResponse,
 } from "@/types/api";
 
 // ── Health ──────────────────────────────────────
@@ -124,6 +125,16 @@ export const uazapiApi = {
     apiClient.post<Conexao[]>("/admin/connections/sync"),
   deleteConnection: (connectionId: string) =>
     apiClient.delete<MessageResponse>(`/admin/connections/${connectionId}`),
+};
+
+// ── Inbox ──────────────────────────────────────
+export const inboxApi = {
+  list: (params?: { conexao_id?: string; status?: string; limit?: number; offset?: number }) =>
+    apiClient.get<InboxListResponse>("/inbox/chats", params as Record<string, unknown>),
+  getChat: (id: string) =>
+    apiClient.get<InboxChat>(`/inbox/chats/${id}`),
+  sync: (conexaoId: string, limit = 50) =>
+    apiClient.post<InboxSyncResponse>(`/inbox/sync/${conexaoId}?limit=${limit}`),
 };
 
 // ── Configuração Empresa (branding) ─────────────

@@ -257,6 +257,7 @@ class Chat(Base):
                 "status IN ('aberto', 'aguardando_lead', 'aguardando_humano')"
             ),
         ),
+        UniqueConstraint("conexao_id", "wa_chat_id", name="uq_chat_conexao_wa_chat_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -273,9 +274,15 @@ class Chat(Base):
     motivo_encerramento: Mapped[str | None] = mapped_column(String(255), nullable=True)
     graph_thread_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     contexto_resumido: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # UAZAPI sync fields
+    wa_chat_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    wa_unread_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    wa_last_msg_timestamp: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    wa_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     iniciado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     ultima_mensagem_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     encerrado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    contato: Mapped["Contato"] = relationship(lazy="selectin")
 
 
 # ──────────────────────────────────────────────────────────

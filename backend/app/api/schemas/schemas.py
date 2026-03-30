@@ -542,3 +542,49 @@ class ConfiguracaoEmpresaRead(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Inbox ────────────────────────────────────────
+class InboxContactInfo(BaseModel):
+    """Embedded contact summary returned with each inbox chat."""
+    id: uuid.UUID
+    nome: str | None
+    telefone_e164: str
+    whatsapp_id: str | None
+    email: str | None
+
+    model_config = {"from_attributes": True}
+
+
+class InboxChatRead(BaseModel):
+    """Enriched chat row for the inbox screen."""
+    id: uuid.UUID
+    empresa_id: uuid.UUID
+    conexao_id: uuid.UUID
+    contato_id: uuid.UUID
+    contato: InboxContactInfo
+    status: str
+    wa_chat_id: str | None
+    wa_unread_count: int
+    wa_last_msg_timestamp: int | None
+    wa_name: str | None
+    equipe_id: uuid.UUID | None
+    usuario_responsavel_id: uuid.UUID | None
+    agente_ia_id: uuid.UUID | None
+    iniciado_em: datetime
+    ultima_mensagem_em: datetime | None
+
+    model_config = {"from_attributes": True}
+
+
+class InboxSyncResponse(BaseModel):
+    synced: int
+    created_contacts: int
+    pagination: dict
+
+
+class InboxListResponse(BaseModel):
+    items: list[InboxChatRead]
+    total: int
+    offset: int
+    limit: int

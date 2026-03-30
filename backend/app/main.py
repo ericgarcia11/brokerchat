@@ -54,6 +54,7 @@ from app.api.routes.admin_ops import router as admin_ops_router
 from app.api.routes.cadence import router as cadence_router
 from app.api.routes.configuracao import router as configuracao_router
 from app.api.routes.configuracao import public_router as configuracao_public_router
+from app.api.routes.inbox import router as inbox_router
 
 app.include_router(health_router)
 app.include_router(webhooks_router)
@@ -63,3 +64,4 @@ app.include_router(admin_ops_router)
 app.include_router(cadence_router)
 app.include_router(configuracao_router)
 app.include_router(configuracao_public_router)
+app.include_router(inbox_router)

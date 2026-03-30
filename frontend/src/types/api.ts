@@ -539,3 +539,33 @@ export interface ConfiguracaoEmpresaUpdate {
   uazapi_server_url?: string | null;
   uazapi_admin_token?: string | null;
 }
+
+// ── Inbox ────────────────────────────────────────
+export interface InboxContactInfo {
+  id: string;
+  nome: string | null;
+  telefone_e164: string;
+  whatsapp_id: string | null;
+  email: string | null;
+}
+
+export interface InboxChat extends Chat {
+  contato: InboxContactInfo;
+  wa_chat_id: string | null;
+  wa_unread_count: number;
+  wa_last_msg_timestamp: number | null;
+  wa_name: string | null;
+}
+
+export interface InboxListResponse {
+  items: InboxChat[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+export interface InboxSyncResponse {
+  synced: number;
+  created_contacts: number;
+  pagination: Record<string, unknown>;
+}

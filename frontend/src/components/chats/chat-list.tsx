@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatRelative, truncate } from "@/lib/formatters";
 import type { Chat } from "@/types/api";
@@ -16,9 +17,10 @@ interface ChatListProps {
   selectedChatId: string | null;
   onSelectChat: (id: string) => void;
   contactNames: Record<string, string>;
+  unreadCounts?: Record<string, number>;
 }
 
-export function ChatList({ chats, selectedChatId, onSelectChat, contactNames }: ChatListProps) {
+export function ChatList({ chats, selectedChatId, onSelectChat, contactNames, unreadCounts }: ChatListProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all_active");
 
@@ -80,30 +82,40 @@ export function ChatList({ chats, selectedChatId, onSelectChat, contactNames }: 
           </div>
         ) : (
           <div className="space-y-0.5 p-1">
-            {filtered.map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => onSelectChat(chat.id)}
-                className={cn(
-                  "flex w-full items-start gap-3 rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent",
-                  selectedChatId === chat.id && "bg-accent",
-                )}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium truncate">
-                      {contactNames[chat.contato_id] || chat.contato_id.slice(0, 8)}
-                    </span>
-                    <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                      {formatRelative(chat.ultima_mensagem_em || chat.iniciado_em)}
-                    </span>
+            {filtered.map((chat) => {
+              const unread = unreadCounts?.[chat.id] ?? 0;
+              return (
+                <button
+                  key={chat.id}
+                  onClick={() => onSelectChat(chat.id)}
+                  className={cn(
+                    "flex w-full items-start gap-3 rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent",
+                    selectedChatId === chat.id && "bg-accent",
+                  )}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className={cn("font-medium truncate", unread > 0 && "text-foreground")}>
+                        {contactNames[chat.contato_id] || chat.contato_id.slice(0, 8)}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                        {unread > 0 && (
+                          <Badge variant="default" className="h-4 min-w-4 px-1 text-[10px] leading-none">
+                            {unread > 99 ? "99+" : unread}
+                          </Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {formatRelative(chat.ultima_mensagem_em || chat.iniciado_em)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-1">
+                      <StatusBadge status={chat.status} />
+                    </div>
                   </div>
-                  <div className="mt-1">
-                    <StatusBadge status={chat.status} />
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         )}
       </ScrollArea>

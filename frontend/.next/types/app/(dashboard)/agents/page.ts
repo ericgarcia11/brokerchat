@@ -1,4 +1,4 @@
-// File: /home/saluimoveis/wwp-frontend/src/app/(dashboard)/agents/page.tsx
+// File: /home/ericgarcia/brokerchat/frontend/src/app/(dashboard)/agents/page.tsx
 import * as entry from '../../../../../src/app/(dashboard)/agents/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
