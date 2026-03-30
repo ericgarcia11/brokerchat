@@ -44,7 +44,7 @@ export default function CadenceDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-4 max-w-2xl">
       <PageHeader
         title={fluxo.nome}
         description={fluxo.descricao ?? "Fluxo de cadência"}

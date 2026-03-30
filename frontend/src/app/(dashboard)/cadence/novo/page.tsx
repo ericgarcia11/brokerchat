@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react";
 
 export default function CadenceNovoPage() {
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-4 max-w-2xl">
       <PageHeader
         title="Novo Fluxo de Cadência"
         description="Configure a sequência de mensagens automáticas"

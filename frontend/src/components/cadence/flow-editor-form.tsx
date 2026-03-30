@@ -5,6 +5,7 @@ import type { Control, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,9 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, ArrowDown, Send, MessageSquare } from "lucide-react";
+import {
+  Play,
+  Plus,
+  Trash2,
+  MessageSquare,
+  Clock,
+  ChevronDown,
+  Zap,
+} from "lucide-react";
 import {
   useCreateCadenceFluxo,
   useUpdateCadenceFluxo,
@@ -114,20 +122,90 @@ function buildDefaultValues(fluxo?: CadenceFluxo): FluxoFormValues {
   };
 }
 
-// ── Delay connector sub-component ─────────────────────────────────────────
-interface DelayConnectorProps {
+// ── NodeConnector ──────────────────────────────────────────────────────────
+function NodeConnector() {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="h-6 w-px bg-border" />
+      <ChevronDown className="h-3.5 w-3.5 text-border -my-px" />
+      <div className="h-3 w-px bg-border" />
+    </div>
+  );
+}
+
+// ── WorkflowNode ───────────────────────────────────────────────────────────
+interface WorkflowNodeProps {
+  title: string;
+  subtitle?: string;
+  headerClass: string;
+  icon: React.ElementType;
+  iconBgClass: string;
+  borderClass: string;
+  children: React.ReactNode;
+  onDelete?: () => void;
+}
+
+function WorkflowNode({
+  title,
+  subtitle,
+  headerClass,
+  icon: Icon,
+  iconBgClass,
+  borderClass,
+  children,
+  onDelete,
+}: WorkflowNodeProps) {
+  return (
+    <div
+      className={cn(
+        "w-full max-w-[600px] rounded-xl overflow-hidden border shadow-sm",
+        borderClass
+      )}
+    >
+      {/* Header */}
+      <div className={cn("flex items-center justify-between px-4 py-2.5", headerClass)}>
+        <div className="flex items-center gap-2.5">
+          <div className={cn("flex items-center justify-center rounded-md p-1.5", iconBgClass)}>
+            <Icon className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-sm font-semibold">{title}</span>
+          {subtitle && (
+            <span className="text-xs opacity-60 hidden sm:inline">{subtitle}</span>
+          )}
+        </div>
+        {onDelete && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
+      {/* Body */}
+      <div className="bg-card px-4 py-4 space-y-3">{children}</div>
+    </div>
+  );
+}
+
+// ── WaitNode ───────────────────────────────────────────────────────────────
+interface WaitNodeProps {
   index: number;
   control: Control<FluxoFormValues>;
   errors: FieldErrors<FluxoFormValues>;
 }
 
-function DelayConnector({ index, control, errors }: DelayConnectorProps) {
+function WaitNode({ index, control, errors }: WaitNodeProps) {
   return (
-    <div className="flex flex-col items-center gap-0.5 py-1">
-      <div className="h-5 w-px bg-border" />
-      <div className="flex items-center gap-2 rounded-full border bg-muted/60 px-4 py-1.5 text-xs shadow-sm">
-        <ArrowDown className="h-3 w-3 text-muted-foreground" />
-        <span className="text-muted-foreground">Aguarda</span>
+    <div className="flex flex-col items-center gap-1">
+      <div className="flex items-center gap-2 rounded-full border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-5 py-2 shadow-sm text-sm">
+        <Clock className="h-4 w-4 text-amber-500 shrink-0" />
+        <span className="text-amber-700 dark:text-amber-300 font-medium whitespace-nowrap">
+          Aguarda
+        </span>
         <Controller
           name={`steps.${index}.delayValue`}
           control={control}
@@ -135,7 +213,7 @@ function DelayConnector({ index, control, errors }: DelayConnectorProps) {
             <Input
               type="number"
               min={1}
-              className="h-7 w-16 text-center text-xs px-1"
+              className="h-7 w-16 text-center text-xs px-1 border-amber-300 dark:border-amber-700"
               {...field}
             />
           )}
@@ -145,31 +223,59 @@ function DelayConnector({ index, control, errors }: DelayConnectorProps) {
           control={control}
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="h-7 text-xs w-28">
+              <SelectTrigger className="h-7 w-28 text-xs border-amber-300 dark:border-amber-700">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="minutos" className="text-xs">
-                  minuto(s)
-                </SelectItem>
-                <SelectItem value="horas" className="text-xs">
-                  hora(s)
-                </SelectItem>
-                <SelectItem value="dias" className="text-xs">
-                  dia(s)
-                </SelectItem>
+                <SelectItem value="minutos" className="text-xs">minuto(s)</SelectItem>
+                <SelectItem value="horas" className="text-xs">hora(s)</SelectItem>
+                <SelectItem value="dias" className="text-xs">dia(s)</SelectItem>
               </SelectContent>
             </Select>
           )}
         />
-        <span className="text-muted-foreground">de silêncio</span>
+        <span className="text-amber-700 dark:text-amber-300 font-medium whitespace-nowrap">
+          sem resposta
+        </span>
       </div>
       {errors.steps?.[index]?.delayValue && (
         <p className="text-xs text-destructive">
           {errors.steps[index]?.delayValue?.message}
         </p>
       )}
-      <div className="h-5 w-px bg-border" />
+    </div>
+  );
+}
+
+// ── ActionSelect ──────────────────────────────────────────────────────────
+interface ActionSelectProps {
+  name: "acao_resposta" | `steps.${number}.acao_se_responder`;
+  control: Control<FluxoFormValues>;
+}
+
+function ActionSelect({ name, control }: ActionSelectProps) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/50">
+      <Zap className="h-3 w-3 text-muted-foreground" />
+      <span className="text-xs text-muted-foreground shrink-0">Ação ao responder:</span>
+      <Controller
+        name={name}
+        control={control}
+        render={({ field }) => (
+          <Select value={field.value} onValueChange={field.onChange}>
+            <SelectTrigger className="h-7 w-52 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ACAO_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value} className="text-xs">
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      />
     </div>
   );
 }
@@ -234,58 +340,27 @@ export function FlowEditorForm({ fluxo }: FlowEditorFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* ── Header fields ── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Informações do Fluxo</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>
-                Nome <span className="text-destructive">*</span>
-              </Label>
+      {/* ── Config Panel ── */}
+      <div className="rounded-xl border bg-card shadow-sm p-5 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="flex-1 space-y-3 min-w-0">
+            <div>
               <Input
-                placeholder="Ex.: Follow-up 3 dias"
+                className="text-base font-semibold h-10 border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-primary"
+                placeholder="Nome do fluxo…"
                 {...register("nome")}
               />
               {errors.nome && (
-                <p className="text-xs text-destructive">
-                  {errors.nome.message}
-                </p>
+                <p className="text-xs text-destructive mt-1">{errors.nome.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Ação padrão ao responder</Label>
-              <Controller
-                name="acao_resposta"
-                control={control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ACAO_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Descrição</Label>
-            <Textarea
-              placeholder="Descrição opcional do fluxo…"
-              rows={2}
+            <Input
+              className="text-sm text-muted-foreground border-0 border-b rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-primary"
+              placeholder="Descrição opcional…"
               {...register("descricao")}
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pt-1 shrink-0">
             <Controller
               name="ativo"
               control={control}
@@ -297,134 +372,120 @@ export function FlowEditorForm({ fluxo }: FlowEditorFormProps) {
                 />
               )}
             />
-            <Label htmlFor="ativo-switch">Fluxo ativo</Label>
+            <Label htmlFor="ativo-switch" className="text-sm cursor-pointer">
+              Ativo
+            </Label>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Timeline ── */}
-      <div className="space-y-0">
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Linha do tempo
-        </h3>
-
-        {/* Initial message card */}
-        <Card className="border-primary/40 bg-primary/5">
-          <CardHeader className="pb-2 pt-4">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Send className="h-4 w-4 text-primary" />
-              Mensagem Inicial
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                — enviada imediatamente ao entrar na cadência
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 pb-4">
-            <Textarea
-              placeholder="Escreva a mensagem inicial…"
-              rows={3}
-              {...register("mensagem_inicial")}
-            />
-            {errors.mensagem_inicial && (
-              <p className="text-xs text-destructive">
-                {errors.mensagem_inicial.message}
-              </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t">
+          <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Ação padrão ao responder:</span>
+          <Controller
+            name="acao_resposta"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="h-7 w-52 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACAO_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value} className="text-xs">
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            <div className="flex flex-wrap items-center gap-2">
-              <Label className="shrink-0 text-xs">Ação se responder aqui:</Label>
-              <Controller
-                name="acao_resposta"
-                control={control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="h-7 w-52 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ACAO_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value} className="text-xs">
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
+          />
+        </div>
+      </div>
 
-        {/* Step list */}
+      {/* ── Workflow Canvas ── */}
+      <div className="flex flex-col items-center">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-5 self-start">
+          Fluxo de mensagens
+        </p>
+
+        {/* Trigger node */}
+        <WorkflowNode
+          title="Início"
+          subtitle="— contato entra na cadência"
+          headerClass="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+          icon={Play}
+          iconBgClass="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+          borderClass="border-emerald-300 dark:border-emerald-800"
+        >
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Este fluxo é disparado quando um contato entra na cadência. A primeira
+            mensagem é enviada imediatamente.
+          </p>
+        </WorkflowNode>
+
+        <NodeConnector />
+
+        {/* Initial message node */}
+        <WorkflowNode
+          title="Mensagem Inicial"
+          headerClass="bg-primary/10 text-primary"
+          icon={MessageSquare}
+          iconBgClass="bg-primary/20 text-primary"
+          borderClass="border-primary/30"
+        >
+          <Textarea
+            placeholder="Escreva a mensagem inicial…"
+            rows={3}
+            {...register("mensagem_inicial")}
+          />
+          {errors.mensagem_inicial && (
+            <p className="text-xs text-destructive">{errors.mensagem_inicial.message}</p>
+          )}
+          <ActionSelect name="acao_resposta" control={control} />
+        </WorkflowNode>
+
+        {/* Steps */}
         {fields.map((field, index) => (
-          <div key={field.id}>
-            <DelayConnector index={index} control={control} errors={errors} />
-            <Card className="border-muted">
-              <CardHeader className="pb-2 pt-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    Follow-up #{index + 1}
-                  </CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => remove(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 pb-4">
-                <Textarea
-                  placeholder={`Escreva a mensagem do follow-up #${index + 1}…`}
-                  rows={3}
-                  {...register(`steps.${index}.mensagem`)}
-                />
-                {errors.steps?.[index]?.mensagem && (
-                  <p className="text-xs text-destructive">
-                    {errors.steps[index]?.mensagem?.message}
-                  </p>
-                )}
-                <div className="flex flex-wrap items-center gap-2">
-                  <Label className="shrink-0 text-xs">Ação se responder aqui:</Label>
-                  <Controller
-                    name={`steps.${index}.acao_se_responder`}
-                    control={control}
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="h-7 w-52 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ACAO_OPTIONS.map((o) => (
-                            <SelectItem
-                              key={o.value}
-                              value={o.value}
-                              className="text-xs"
-                            >
-                              {o.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+          <div
+            key={field.id}
+            className="flex flex-col items-center w-full max-w-[600px]"
+          >
+            <NodeConnector />
+            <WaitNode index={index} control={control} errors={errors} />
+            <NodeConnector />
+            <WorkflowNode
+              title={`Follow-up #${index + 1}`}
+              headerClass="bg-violet-500/10 text-violet-700 dark:text-violet-400"
+              icon={MessageSquare}
+              iconBgClass="bg-violet-500/20 text-violet-600 dark:text-violet-400"
+              borderClass="border-violet-300 dark:border-violet-800"
+              onDelete={() => remove(index)}
+            >
+              <Textarea
+                placeholder={`Escreva a mensagem do follow-up #${index + 1}…`}
+                rows={3}
+                {...register(`steps.${index}.mensagem`)}
+              />
+              {errors.steps?.[index]?.mensagem && (
+                <p className="text-xs text-destructive">
+                  {errors.steps[index]?.mensagem?.message}
+                </p>
+              )}
+              <ActionSelect
+                name={`steps.${index}.acao_se_responder`}
+                control={control}
+              />
+            </WorkflowNode>
           </div>
         ))}
 
-        {/* Add step button */}
-        <div className="flex flex-col items-center gap-0 pt-1">
-          {fields.length > 0 && <div className="h-5 w-px bg-border" />}
+        {/* Add step */}
+        <div className="flex flex-col items-center mt-1">
+          <div className="h-6 w-px bg-border" />
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="mt-1 gap-2"
+            className="gap-2 rounded-full px-5 shadow-sm hover:shadow transition-shadow"
             onClick={() =>
               append({
                 delayValue: 1,
